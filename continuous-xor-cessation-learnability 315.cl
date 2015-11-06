@@ -48,10 +48,12 @@ Make training patterns for continuous-xor with a %predictable chance of any patt
                           -.5
                         .5)))
             (inputs (list x y)))
-        (setf patterns (cons (list inputs (list output)) patterns))))))
+        (if (> attention (random 100))
+         (setf patterns (cons (list inputs (list output)) patterns)))
+        ))))
 
-(defun run-learnability (learnability patience threshold n path)
-  "(learnability patience threshold n path)
+(defun run-learnability (attention learnability patience threshold n path)
+  "(attention learnability patience threshold n path)
 Run n continuous-xor nets for parameter settings. Record training & test error every output epoch.
 Record output-epochs, outcome, structure."
   (setf 
@@ -82,9 +84,9 @@ Record output-epochs, outcome, structure."
          (lists->file structures (concatenate 'string path "structures"))))
     (seed-random)
     (terpri)
-    (format t "learnability = ~A, patience = ~A, threshold = ~,2F, network = ~A ~%"
-      learnability patience threshold i)
-    (set-patterns (random-xor .1 .1 learnability) 'train)
+    (format t "Attention = ~A, learnability = ~A, patience = ~A, threshold = ~,2F, network = ~A ~%"
+      attention learnability patience threshold i)
+    (set-patterns (random-xor .1 .1 attention learnability) 'train)
     (set-patterns (continuous-xor .14 .1) 'test)
     (setf 
      outcome (train 100 100 25 2000)

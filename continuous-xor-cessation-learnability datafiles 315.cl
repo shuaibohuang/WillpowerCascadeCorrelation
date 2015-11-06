@@ -55,7 +55,7 @@ Process 1 data folder from parameter names & values, dependent measure, & path."
   (let* ((label (pair-lists parameters parameter-values))
          (contents (file->list (concatenate 'string path 
                                  (list->strings (mapcar #'listof2->string label)) 
-                                 "\\" 
+                                 "\" 
                                  (princ-to-string measure)))))
     (append-net#s-scores parameter-values contents)))
 
