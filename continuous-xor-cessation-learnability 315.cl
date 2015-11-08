@@ -23,9 +23,12 @@ Make training or test patterns for continuous-xor."
             (inputs (list x y)))
         (setf patterns (cons (list inputs (list output)) patterns))))))
 
-(defun random-xor (start step learnability)
-  "(start step percent-predictable)
-Make training patterns for continuous-xor with a %predictable chance of any pattern having random output value."
+"------------------------------Extension is made to add the function of willpower depletion---------------"
+(defun random-xor (start step depletionFactor learnability)
+  "(start step depletionFactor percent-predictable)
+Make training patterns for continuous-xor with a %predictable chance of any pattern having random output value.
+AS the number of cycles increase, the learner will start to lose attetion and miss training information"
+  (setf cycle 0)
   (do ((x start (float->decimals (+ x step) 2))
        (patterns nil))
       ((> x 1.0) (reverse patterns))
@@ -48,12 +51,13 @@ Make training patterns for continuous-xor with a %predictable chance of any patt
                           -.5
                         .5)))
             (inputs (list x y)))
-        (if (> attention (random 100))
+        (setf cycle (1+ cycle))
+        (if (> (- 100 (/ (* cycle 0.1 depletionFactor) (/ learnability 100))) (random 100))
          (setf patterns (cons (list inputs (list output)) patterns)))
         ))))
-
-(defun run-learnability (attention learnability patience threshold n path)
-  "(attention learnability patience threshold n path)
+"-------------_Training Pattern is only received when the random number is smaller than our probability to lose information----------------------"
+(defun run-learnability (depletionFactor learnability patience threshold n path)
+  "(depletionFactor learnability patience threshold n path)
 Run n continuous-xor nets for parameter settings. Record training & test error every output epoch.
 Record output-epochs, outcome, structure."
   (setf 
@@ -84,9 +88,9 @@ Record output-epochs, outcome, structure."
          (lists->file structures (concatenate 'string path "structures"))))
     (seed-random)
     (terpri)
-    (format t "Attention = ~A, learnability = ~A, patience = ~A, threshold = ~,2F, network = ~A ~%"
-      attention learnability patience threshold i)
-    (set-patterns (random-xor .1 .1 attention learnability) 'train)
+    (format t "Depletion Factor = ~A, learnability = ~A, patience = ~A, threshold = ~,2F, network = ~A ~%"
+      depletionFactor learnability patience threshold i)
+    (set-patterns (random-xor .1 .1 depletionFactor learnability) 'train)
     (set-patterns (continuous-xor .14 .1) 'test)
     (setf 
      outcome (train 100 100 25 2000)
@@ -136,7 +140,7 @@ Make folders at end of path for all combinations of parameter values in sets."
   (do ((folder-labels (apply #'cartesian-product sets) (cdr folder-labels)))
       ((null folder-labels))
     (let ((label (pair-lists parameters (car folder-labels))))
-      (make-directory (concatenate 'string path (list->strings (mapcar #'listof2->string label)) "\\")))))
+      (make-directory (concatenate 'string path (list->strings (mapcar #'listof2->string label)) "\")))))
 
 (defun run-all (parameters n path &rest sets)
   "(parameters path &rest sets)
@@ -145,39 +149,17 @@ Make folders at end of path for all combinations of parameter values in sets."
       ((null folder-labels))
     (let* ((parameter-values (car folder-labels))
            (label (pair-lists parameters parameter-values))
-           (learnability (first parameter-values))
-           (patience (second parameter-values))
-           (threshold (third parameter-values)))
-      (run-learnability 
+           (depletionFactor (first parameter-values))
+           (learnability (second parameter-values))
+           (patience (third parameter-values))
+           (threshold (fourth parameter-values)))
+      (run-learnability
+       depletionFactor
        learnability
        patience
        threshold
        n
-       (concatenate 'string path (list->strings (mapcar #'listof2->string label)) "\\")))))
+       (concatenate 'string path (list->strings (mapcar #'listof2->string label)) "\")))))
 
-;;;(make-folders '(lrn ptn thr) 
-;;;              "C:\\users\\tom_2.tom-pcstudio15\\documents\\courses\\315\\2012\\cessation\\results\\" 
-;;;              '(95 100)
-;;;              '(2 4)
-;;;              '(.25 .30))
 
-;;;(run-all '(lrn ptn thr)
-;;;         2
-;;;         "C:\\users\\tom_2.tom-pcstudio15\\documents\\courses\\315\\2012\\cessation\\results\\"
-;;;         '(95 100)
-;;;         '(2 4)
-;;;         '(.25 .30))
-
-;;;(make-folders '(lrn ptn thr) 
-;;;              "C:\\users\\tom\\documents\\courses\\315\\2012\\cessation\\results2\\" 
-;;;              '(95 100)
-;;;              '(2 4)
-;;;              '(.25 .30))
-
-;;;(run-all '(lrn ptn thr)
-;;;         2
-;;;         "C:\\users\\tom\\documents\\courses\\315\\2012\\cessation\\results2\\"
-;;;         '(95 100)
-;;;         '(2 4)
-;;;         '(.25 .30))
 
